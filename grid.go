@@ -48,7 +48,7 @@ func pyramidResLevel(initial_res float64, factor *float32, levels *uint32) []flo
 	}
 	ret := make([]float64, nlevel)
 	for i := range ret {
-		ret[i] = math.Pow(initial_res/fac, float64(i))
+		ret[i] = initial_res / math.Pow(fac, float64(i))
 	}
 	return ret
 }
@@ -444,13 +444,13 @@ func (t *TileGrid) calcRes(factor *float32) []float64 {
 	}
 }
 
-func (t *TileGrid) calcBBox() vec2d.Rect {
+func (t *TileGrid) calcBBox() *vec2d.Rect {
 	if t.IsGeodetic {
-		return vec2d.Rect{Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}}
+		return &vec2d.Rect{Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}}
 	} else {
 		circum := 2 * math.Pi * t.SpheroidA
 		offset := circum / 2.0
-		return vec2d.Rect{Min: vec2d.T{-offset, -offset}, Max: vec2d.T{offset, offset}}
+		return &vec2d.Rect{Min: vec2d.T{-offset, -offset}, Max: vec2d.T{offset, offset}}
 	}
 }
 
@@ -471,7 +471,7 @@ func newTileGrid(name string, is_geodetic bool, origin OriginType, srs *SRSProj4
 		ret.FlippedYAxis = false
 	}
 	if ret.BBox == nil {
-		ret.calcBBox()
+		ret.BBox = ret.calcBBox()
 	}
 	if res != nil {
 		ret.Resolutions = res
@@ -505,24 +505,11 @@ func newTileGrid(name string, is_geodetic bool, origin OriginType, srs *SRSProj4
 	return ret
 }
 
-func NewDefaultTileGrid() *TileGrid {
-	ret := &TileGrid{}
-	ret.SpheroidA = 6378137.0
-	ret.Srs = newSRSProj4("900913")
-	ret.BBox = nil
-	ret.TileSize = []uint32{256, 256}
-	ret.IsGeodetic = false
-	ret.StretchFactor = 1.15
-	ret.MaxShrinkFactor = 4.0
-	ret.Origin = ORIGIN_LL
-	ret.FlippedYAxis = false
-	ret.Levels = 20
-	ret.calcBBox()
-	fac := float32(2.0)
-	ret.Resolutions = ret.calcRes(&fac)
-	ret.Levels = uint32(len(ret.Resolutions))
-	ret.GridSizes = ret.calcGrids()
-	return ret
+func NewMercTileGrid() *TileGrid {
+	opt := DefaultTileGridOptions()
+	opt[TILEGRID_SRS] = "EPSG:3857"
+	opt[TILEGRID_ORIGIN] = ORIGIN_UL
+	return NewTileGrid(opt)
 }
 
 func (t *TileGrid) Resolution(level int) float64 {
@@ -682,6 +669,10 @@ func createTileTileIter(xs, ys []int, level int, grid_size [2]uint32) *TileIter 
 func (i *TileIter) Reset() {
 	i.x_off = 0
 	i.y_off = 0
+}
+
+func (i *TileIter) GetTileBound() [4]uint32 {
+	return [4]uint32{uint32(i.xs[0]), uint32(i.ys[0]), uint32(i.xs[len(i.xs)-1]), uint32(i.ys[len(i.ys)-1])}
 }
 
 func (i *TileIter) Next() (x, y, level int, done bool) {

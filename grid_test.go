@@ -188,7 +188,7 @@ func TestEpsg4326BBox(t *testing.T) {
 	conf[TILEGRID_SRS] = newSRSProj4("EPSG:4326")
 
 	base := NewTileGrid(conf)
-	bbox := vec2d.Rect{Min: vec2d.T{10.0, -20.0}, Max: vec2d.T{40.0, 10.0}}
+	bbox := &vec2d.Rect{Min: vec2d.T{10.0, -20.0}, Max: vec2d.T{40.0, 10.0}}
 
 	subConf := DefaultTileGridOptions()
 	subConf[TILEGRID_ALIGN_WITH] = base
@@ -196,11 +196,11 @@ func TestEpsg4326BBox(t *testing.T) {
 
 	sub := NewTileGrid(subConf)
 
-	if !BBoxEquals(*sub.BBox, bbox, math.Inf(1), math.Inf(1)) {
+	if !BBoxEquals(*sub.BBox, *bbox, math.Inf(1), math.Inf(1)) {
 		t.FailNow()
 	}
 
-	abbox, grid_size, tiles, err := sub.GetAffectedLevelTiles(bbox, 0)
+	abbox, grid_size, tiles, err := sub.GetAffectedLevelTiles(*bbox, 0)
 
 	if err != nil {
 		t.FailNow()
