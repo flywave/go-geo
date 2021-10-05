@@ -512,6 +512,13 @@ func NewMercTileGrid() *TileGrid {
 	return NewTileGrid(opt)
 }
 
+func NewGeodeticTileGrid() *TileGrid {
+	opt := DefaultTileGridOptions()
+	opt[TILEGRID_SRS] = "EPSG:4326"
+	opt[TILEGRID_ORIGIN] = ORIGIN_UL
+	return NewTileGrid(opt)
+}
+
 func (t *TileGrid) Resolution(level int) float64 {
 	if level >= int(t.Levels) {
 		return 0
