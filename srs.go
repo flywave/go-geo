@@ -80,12 +80,16 @@ func newSRSProj4(srsCode string) *SRSProj4 {
 	} else {
 		epsg_num := GetEpsgNum(srsCode)
 		if epsg_num < 0 {
-			return nil
-		}
-		srs := fmt.Sprintf("+init=epsg:%d +no_defs", epsg_num)
-		p.proj, err = proj.NewProj(srs)
-		if err != nil {
-			return nil
+			p.proj, err = proj.NewProj(srsCode)
+			if err != nil {
+				return nil
+			}
+		} else {
+			srs := fmt.Sprintf("+init=epsg:%d +no_defs", epsg_num)
+			p.proj, err = proj.NewProj(srs)
+			if err != nil {
+				return nil
+			}
 		}
 	}
 	return p
