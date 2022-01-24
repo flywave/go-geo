@@ -98,7 +98,7 @@ func alignedResolutions(min_res *float64, max_res *float64, res_factor interface
 		if bbox != nil {
 			width = bbox.Max[0] - bbox.Min[0]
 			height = bbox.Max[1] - bbox.Min[1]
-			cmin_res = math.Max(width/float64(tile_size[0]), height/float64(tile_size[1]))
+			cmin_res = math.Min(width/float64(tile_size[0]), height/float64(tile_size[1]))
 		}
 	}
 
@@ -173,7 +173,7 @@ func caclResolutions(min_res *float64, max_res *float64, res_factor interface{},
 		if bbox != nil {
 			width = bbox.Max[0] - bbox.Min[0]
 			height = bbox.Max[1] - bbox.Min[1]
-			cmin_res = math.Max(width/float64(tileSize[0]), height/float64(tileSize[1]))
+			cmin_res = math.Min(width/float64(tileSize[0]), height/float64(tileSize[1]))
 		}
 	} else {
 		cmin_res = *min_res
@@ -436,7 +436,7 @@ func (t *TileGrid) calcGrids() [][2]uint32 {
 func (t *TileGrid) calcRes(factor *float32) []float64 {
 	width := t.BBox.Max[0] - t.BBox.Min[0]
 	height := t.BBox.Max[1] - t.BBox.Min[1]
-	initial_res := math.Max(width/float64(t.TileSize[0]), height/float64(t.TileSize[1]))
+	initial_res := math.Min(width/float64(t.TileSize[0]), height/float64(t.TileSize[1]))
 	if factor == nil {
 		return pyramidResLevel(initial_res, nil, &t.Levels)
 	} else {
