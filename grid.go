@@ -17,18 +17,22 @@ var (
 	}
 	DEFAULT_EPSG_BBOX = map[uint32]vec2d.Rect{
 		4326:   {Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}},
+		4490:   {Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}},
 		900913: MERC_BBOX,
 		3857:   MERC_BBOX,
 		102100: MERC_BBOX,
 		102113: MERC_BBOX,
+		4479:   MERC_BBOX,
 	}
 	DEFAULT_SRS_BBOX = map[string]vec2d.Rect{
 		"EPSG:4326":    {Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}},
+		"EPSG:4490":    {Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}},
 		"EPSG:900913":  MERC_BBOX,
 		"EPSG:3857":    MERC_BBOX,
 		"EPSG:102100":  MERC_BBOX,
 		"EPSG:102113":  MERC_BBOX,
 		"EPSG:GCJ02MC": MERC_BBOX,
+		"EPSG:4479":    MERC_BBOX,
 	}
 )
 
