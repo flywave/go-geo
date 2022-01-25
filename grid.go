@@ -89,7 +89,7 @@ func OriginToString(ot OriginType) string {
 }
 
 func alignedResolutions(min_res *float64, max_res *float64, res_factor interface{}, num_levels *int,
-	bbox *vec2d.Rect, tile_size []uint32, align_with *TileGrid) []float64 {
+	bbox *vec2d.Rect, tile_size []uint32, align_with *TileGrid, initial_res_min bool) []float64 {
 	alinged_res := align_with.Resolutions
 	res := make([]float64, 0, len(alinged_res))
 
@@ -98,7 +98,11 @@ func alignedResolutions(min_res *float64, max_res *float64, res_factor interface
 		if bbox != nil {
 			width = bbox.Max[0] - bbox.Min[0]
 			height = bbox.Max[1] - bbox.Min[1]
-			cmin_res = math.Min(width/float64(tile_size[0]), height/float64(tile_size[1]))
+			if initial_res_min {
+				cmin_res = math.Max(width/float64(tile_size[0]), height/float64(tile_size[1]))
+			} else {
+				cmin_res = math.Min(width/float64(tile_size[0]), height/float64(tile_size[1]))
+			}
 		}
 	}
 
@@ -148,7 +152,7 @@ func alignedResolutions(min_res *float64, max_res *float64, res_factor interface
 }
 
 func caclResolutions(min_res *float64, max_res *float64, res_factor interface{}, num_levels *int,
-	bbox *vec2d.Rect, tile_size []uint32) []float64 {
+	bbox *vec2d.Rect, tile_size []uint32, initial_res_min bool) []float64 {
 	factor := 2.0
 	if res_factor != nil {
 		if str, ok := res_factor.(string); ok {
@@ -173,7 +177,11 @@ func caclResolutions(min_res *float64, max_res *float64, res_factor interface{},
 		if bbox != nil {
 			width = bbox.Max[0] - bbox.Min[0]
 			height = bbox.Max[1] - bbox.Min[1]
-			cmin_res = math.Min(width/float64(tileSize[0]), height/float64(tileSize[1]))
+			if initial_res_min {
+				cmin_res = math.Max(width/float64(tileSize[0]), height/float64(tileSize[1]))
+			} else {
+				cmin_res = math.Min(width/float64(tileSize[0]), height/float64(tileSize[1]))
+			}
 		}
 	} else {
 		cmin_res = *min_res
@@ -266,6 +274,7 @@ type TileGrid struct {
 	ThresholdRes    []float64
 	GridSizes       [][2]uint32
 	SpheroidA       float64
+	InitialResMin   bool
 }
 
 type TileGridOptions map[string]interface{}
@@ -287,6 +296,7 @@ const (
 	TILEGRID_ORIGIN             = "origin"
 	TILEGRID_NAME               = "name"
 	TILEGRID_IS_GEODETIC        = "is_geodetic"
+	TILEGRID_INITIAL_RES_MIN    = "initial_res_min"
 )
 
 func DefaultTileGridOptions() TileGridOptions {
@@ -296,6 +306,7 @@ func DefaultTileGridOptions() TileGridOptions {
 	conf[TILEGRID_MAX_STRETCH_FACTOR] = 1.15
 	conf[TILEGRID_MAX_SHRINK_FACTOR] = 4.0
 	conf[TILEGRID_ORIGIN] = ORIGIN_LL
+	conf[TILEGRID_INITIAL_RES_MIN] = false
 	return conf
 }
 
@@ -385,6 +396,13 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 		is_geodetic = false
 	}
 
+	var initial_res_min bool
+	if v, ok := options[TILEGRID_INITIAL_RES_MIN]; ok {
+		initial_res_min = v.(bool)
+	} else {
+		initial_res_min = false
+	}
+
 	if srs == nil {
 		srs = newSRSProj4("EPSG:900913")
 	}
@@ -410,9 +428,9 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 	if res != nil {
 		sort.Sort(sort.Reverse(sort.Float64Slice(res)))
 	} else if align_with != nil {
-		res = alignedResolutions(min_res, max_res, res_factor, num_levels, bbox, tile_size, align_with)
+		res = alignedResolutions(min_res, max_res, res_factor, num_levels, bbox, tile_size, align_with, initial_res_min)
 	} else {
-		res = caclResolutions(min_res, max_res, res_factor, num_levels, bbox, tile_size)
+		res = caclResolutions(min_res, max_res, res_factor, num_levels, bbox, tile_size, initial_res_min)
 	}
 
 	return newTileGrid(name, is_geodetic, origin, srs, bbox, res_factor, tile_size, res, threshold_res, stretch_factor, max_shrink_factor)
@@ -436,7 +454,12 @@ func (t *TileGrid) calcGrids() [][2]uint32 {
 func (t *TileGrid) calcRes(factor *float32) []float64 {
 	width := t.BBox.Max[0] - t.BBox.Min[0]
 	height := t.BBox.Max[1] - t.BBox.Min[1]
-	initial_res := math.Min(width/float64(t.TileSize[0]), height/float64(t.TileSize[1]))
+	var initial_res float64
+	if t.InitialResMin {
+		initial_res = math.Max(width/float64(t.TileSize[0]), height/float64(t.TileSize[1]))
+	} else {
+		initial_res = math.Min(width/float64(t.TileSize[0]), height/float64(t.TileSize[1]))
+	}
 	if factor == nil {
 		return pyramidResLevel(initial_res, nil, &t.Levels)
 	} else {

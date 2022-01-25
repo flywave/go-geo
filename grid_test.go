@@ -12,7 +12,7 @@ import (
 
 func TestMinRes(t *testing.T) {
 	min_res := float64(1000)
-	res := caclResolutions(&min_res, nil, nil, nil, nil, nil)
+	res := caclResolutions(&min_res, nil, nil, nil, nil, nil, false)
 
 	if len(res) != 20 {
 		t.FailNow()
@@ -23,7 +23,7 @@ func TestMinMaxRes(t *testing.T) {
 	min_res := float64(1000)
 	max_res := float64(80)
 
-	res := caclResolutions(&min_res, &max_res, nil, nil, nil, nil)
+	res := caclResolutions(&min_res, &max_res, nil, nil, nil, nil, false)
 
 	if len(res) != 4 {
 		t.FailNow()
@@ -34,7 +34,7 @@ func TestMinResLevels(t *testing.T) {
 	min_res := float64(1600)
 	num_levels := 5
 
-	res := caclResolutions(&min_res, nil, nil, &num_levels, nil, nil)
+	res := caclResolutions(&min_res, nil, nil, &num_levels, nil, nil, false)
 
 	if len(res) != 5 {
 		t.FailNow()
@@ -46,7 +46,7 @@ func TestMinResLevelsResFactor(t *testing.T) {
 	num_levels := 4
 	res_factor := 4.0
 
-	res := caclResolutions(&min_res, nil, res_factor, &num_levels, nil, nil)
+	res := caclResolutions(&min_res, nil, res_factor, &num_levels, nil, nil, false)
 
 	if len(res) != 4 {
 		t.FailNow()
@@ -57,7 +57,7 @@ func TestMinResLevelsSqrt2(t *testing.T) {
 	min_res := float64(1600)
 	num_levels := 5
 
-	res := caclResolutions(&min_res, nil, "sqrt2", &num_levels, nil, nil)
+	res := caclResolutions(&min_res, nil, "sqrt2", &num_levels, nil, nil, false)
 
 	if len(res) != 5 {
 		t.FailNow()
@@ -70,7 +70,7 @@ func TestMinResMaxResLevels(t *testing.T) {
 
 	num_levels := 10
 
-	res := caclResolutions(&min_res, &max_res, nil, &num_levels, nil, nil)
+	res := caclResolutions(&min_res, &max_res, nil, &num_levels, nil, nil, false)
 
 	if len(res) != 10 {
 		t.FailNow()
@@ -82,7 +82,7 @@ func TestBoxLevels(t *testing.T) {
 	num_levels := 10
 	tilesize := []uint32{256, 256}
 
-	res := caclResolutions(nil, nil, nil, &num_levels, &bbox, tilesize)
+	res := caclResolutions(nil, nil, nil, &num_levels, &bbox, tilesize, false)
 
 	if len(res) != 10 {
 		t.FailNow()
@@ -672,6 +672,7 @@ func TestGEO(t *testing.T) {
 	conf[TILEGRID_TILE_SIZE] = []uint32{256, 256}
 	conf[TILEGRID_ORIGIN] = ORIGIN_UL
 	conf[TILEGRID_BBOX] = &vec2d.Rect{Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}}
+	conf[TILEGRID_INITIAL_RES_MIN] = true
 
 	grid := NewTileGrid(conf)
 
