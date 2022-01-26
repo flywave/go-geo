@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/flywave/go-tileproxy/geo"
 	vec2d "github.com/flywave/go3d/float64/vec2"
 
 	"github.com/flywave/go-geo/gcj02"
@@ -480,4 +481,23 @@ func NewProj(srsCode interface{}) Proj {
 		return newSRSProj4(fmt.Sprintf("EPSG:%d", c))
 	}
 	return nil
+}
+
+func GetLatLongProj(src geo.Proj) geo.Proj {
+	if !src.IsLatLong() {
+		switch src.GetSrsCode() {
+		case "EPSG:4479":
+			return geo.NewProj("EPSG:4490")
+		case "EPSG:GCJ02MC":
+			return geo.NewProj("EPSG:GCJ02")
+		case "EPSG:BDMC":
+			return geo.NewProj("EPSG:BD09")
+		case "EPSG:900913", "EPSG:3857":
+			return geo.NewProj("EPSG:4326")
+		default:
+			return geo.NewProj("EPSG:4326")
+		}
+	} else {
+		return src
+	}
 }
