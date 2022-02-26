@@ -677,8 +677,19 @@ func (t *TileGrid) GetAffectedBBoxAndLevel(bbox vec2d.Rect, size [2]uint32, req_
 
 func (t *TileGrid) GetAffectedLevelTiles(bbox vec2d.Rect, level int) (vec2d.Rect, [2]int, *TileIter, error) {
 	delta := t.Resolutions[level] / 10.0
-	x0, y0, _ := t.Tile(bbox.Min[0]+delta, bbox.Min[1]+delta, level)
-	x1, y1, _ := t.Tile(bbox.Max[0]-delta, bbox.Max[1]-delta, level)
+	minx := bbox.Min[0] + delta
+	miny := bbox.Min[1] + delta
+	maxx := bbox.Max[0] - delta
+	maxy := bbox.Max[1] - delta
+
+	minx = math.Min(minx, maxx)
+	maxx = math.Max(minx, maxx)
+	miny = math.Min(miny, maxy)
+	maxy = math.Min(miny, maxy)
+
+	x0, y0, _ := t.Tile(minx, miny, level)
+	x1, y1, _ := t.Tile(maxx, maxy, level)
+
 	return t.tileIter(x0, y0, x1, y1, level)
 }
 
