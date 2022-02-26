@@ -17,17 +17,22 @@ var (
 	}
 	DEFAULT_EPSG_BBOX = map[uint32]vec2d.Rect{
 		4326:   {Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}},
+		4490:   {Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}},
 		900913: MERC_BBOX,
 		3857:   MERC_BBOX,
 		102100: MERC_BBOX,
 		102113: MERC_BBOX,
+		4479:   MERC_BBOX,
 	}
 	DEFAULT_SRS_BBOX = map[string]vec2d.Rect{
-		"EPSG:4326":   {Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}},
-		"EPSG:900913": MERC_BBOX,
-		"EPSG:3857":   MERC_BBOX,
-		"EPSG:102100": MERC_BBOX,
-		"EPSG:102113": MERC_BBOX,
+		"EPSG:4326":    {Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}},
+		"EPSG:4490":    {Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}},
+		"EPSG:900913":  MERC_BBOX,
+		"EPSG:3857":    MERC_BBOX,
+		"EPSG:102100":  MERC_BBOX,
+		"EPSG:102113":  MERC_BBOX,
+		"EPSG:GCJ02MC": MERC_BBOX,
+		"EPSG:4479":    MERC_BBOX,
 	}
 )
 
@@ -223,7 +228,7 @@ func caclResolutions(min_res *float64, max_res *float64, res_factor interface{},
 	return res
 }
 
-func GridBBox(bbox vec2d.Rect, bbox_srs *SRSProj4, srs *SRSProj4) vec2d.Rect {
+func GridBBox(bbox vec2d.Rect, bbox_srs Proj, srs Proj) vec2d.Rect {
 	if bbox_srs != nil {
 		bbox = bbox_srs.TransformRectTo(srs, bbox, 16)
 	}
@@ -262,7 +267,7 @@ type TileGrid struct {
 	Grid
 	Name            string
 	IsGeodetic      bool
-	Srs             *SRSProj4
+	Srs             Proj
 	TileSize        []uint32
 	Origin          OriginType
 	FlippedYAxis    bool
@@ -311,12 +316,12 @@ func DefaultTileGridOptions() TileGridOptions {
 }
 
 func NewTileGrid(options TileGridOptions) *TileGrid {
-	var srs *SRSProj4
+	var srs Proj
 	if v, ok := options[TILEGRID_SRS]; ok {
 		switch sv := v.(type) {
 		case string:
-			srs = newSRSProj4(sv)
-		case *SRSProj4:
+			srs = NewProj(sv)
+		case Proj:
 			srs = sv
 		}
 	}
@@ -326,12 +331,12 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 			bbox = bb
 		}
 	}
-	var bbox_srs *SRSProj4
+	var bbox_srs Proj
 	if v, ok := options[TILEGRID_BBOX_SRS]; ok {
 		switch sv := v.(type) {
 		case string:
-			bbox_srs = newSRSProj4(sv)
-		case *SRSProj4:
+			bbox_srs = NewProj(sv)
+		case Proj:
 			bbox_srs = sv
 		}
 	}
@@ -415,7 +420,7 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 
 	if bbox == nil {
 		var ok bool
-		cbbox, ok = DEFAULT_SRS_BBOX[srs.SrsCode]
+		cbbox, ok = DEFAULT_SRS_BBOX[srs.GetSrsCode()]
 		if !ok {
 			return nil
 		} else {
@@ -477,7 +482,7 @@ func (t *TileGrid) calcBBox() *vec2d.Rect {
 	}
 }
 
-func newTileGrid(name string, is_geodetic bool, origin OriginType, srs *SRSProj4, bbox *vec2d.Rect, res_factor interface{}, tile_size []uint32, res []float64, threshold_res []float64, stretch_factor float64, max_shrink_factor float64) *TileGrid {
+func newTileGrid(name string, is_geodetic bool, origin OriginType, srs Proj, bbox *vec2d.Rect, res_factor interface{}, tile_size []uint32, res []float64, threshold_res []float64, stretch_factor float64, max_shrink_factor float64) *TileGrid {
 	ret := &TileGrid{}
 	ret.Name = name
 	ret.SpheroidA = 6378137.0
@@ -853,7 +858,7 @@ func TileGridForEpsg(SrsCode string, bbox *vec2d.Rect, tile_size []uint32, res [
 	epsg := GetEpsgNum(SrsCode)
 	for c := range geodetic_epsg_codes {
 		if c == int(epsg) {
-			srs := newSRSProj4(fmt.Sprintf("EPSG:%d", epsg))
+			srs := NewProj(fmt.Sprintf("EPSG:%d", epsg))
 			conf := DefaultTileGridOptions()
 			conf[TILEGRID_SRS] = srs
 			conf[TILEGRID_BBOX] = bbox
@@ -864,7 +869,7 @@ func TileGridForEpsg(SrsCode string, bbox *vec2d.Rect, tile_size []uint32, res [
 			return tg
 		}
 	}
-	srs := newSRSProj4(fmt.Sprintf("EPSG:%d", epsg))
+	srs := NewProj(fmt.Sprintf("EPSG:%d", epsg))
 	conf := DefaultTileGridOptions()
 	conf[TILEGRID_SRS] = srs
 	conf[TILEGRID_BBOX] = bbox

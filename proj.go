@@ -481,3 +481,22 @@ func NewProj(srsCode interface{}) Proj {
 	}
 	return nil
 }
+
+func GetLatLongProj(src Proj) Proj {
+	if !src.IsLatLong() {
+		switch src.GetSrsCode() {
+		case "EPSG:4479":
+			return NewProj("EPSG:4490")
+		case "EPSG:GCJ02MC":
+			return NewProj("EPSG:GCJ02")
+		case "EPSG:BDMC":
+			return NewProj("EPSG:BD09")
+		case "EPSG:900913", "EPSG:3857":
+			return NewProj("EPSG:4326")
+		default:
+			return NewProj("EPSG:4326")
+		}
+	} else {
+		return src
+	}
+}
