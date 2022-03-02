@@ -690,7 +690,7 @@ func (t *TileGrid) GetAffectedLevelTiles(bbox vec2d.Rect, level int) (vec2d.Rect
 	minx = math.Min(minx, maxx)
 	maxx = math.Max(minx, maxx)
 	miny = math.Min(miny, maxy)
-	maxy = math.Min(miny, maxy)
+	maxy = math.Max(miny, maxy)
 
 	x0, y0, _ := t.Tile(minx, miny, level)
 	x1, y1, _ := t.Tile(maxx, maxy, level)
