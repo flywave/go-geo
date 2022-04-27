@@ -885,6 +885,12 @@ type MetaGrid struct {
 }
 
 func NewMetaGrid(grid *TileGrid, metaSize [2]uint32, metaBuffer int) *MetaGrid {
+	if metaSize[0] == 0 {
+		metaSize[0] = 1
+	}
+	if metaSize[1] == 0 {
+		metaSize[1] = 1
+	}
 	return &MetaGrid{TileGrid: *grid, MetaSize: metaSize, MetaBuffer: metaBuffer}
 }
 
