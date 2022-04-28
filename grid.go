@@ -769,8 +769,11 @@ func (t *TileGrid) tileIter(x0, y0, x1, y1, level int) (vec2d.Rect, [2]int, *Til
 
 func (t *TileGrid) TilesBBox(tiles [][3]int) vec2d.Rect {
 	ll_bbox := t.TileBBox(tiles[0], false)
-	ur_bbox := t.TileBBox(tiles[len(tiles)-1], false)
-	return MergeBBox(ll_bbox, ur_bbox)
+	for i := range tiles {
+		ur_bbox := t.TileBBox(tiles[i], false)
+		ll_bbox = MergeBBox(ll_bbox, ur_bbox)
+	}
+	return ll_bbox
 }
 
 func (t *TileGrid) TileBBox(tile_coord [3]int, limit bool) vec2d.Rect {
@@ -956,13 +959,14 @@ func (g *MetaGrid) bufferedBBox(bbox vec2d.Rect, level int, limit_to_grid_bbox b
 func (g *MetaGrid) GetMetaTile(tile_coord [3]int) *MetaTile {
 	tile_coord = g.MainTile(tile_coord)
 	level := tile_coord[2]
-	bbox, buffers := g.metaBBox(&tile_coord, nil, true)
+	lst := g.TileList(tile_coord)
+	bbox, buffers := g.metaBBox(&tile_coord, lst, true)
 	grid_size := g.metaSize(level)
 	size := g.sizeFromBufferedBBox(bbox, level)
 
 	tile_patterns := g.tilesPattern(grid_size, buffers, &tile_coord, nil)
 
-	return NewMetaTile(bbox, size, tile_patterns, grid_size)
+	return NewMetaTile(tile_coord, bbox, size, tile_patterns, grid_size)
 }
 
 func (g *MetaGrid) MinimalMetaTile(tiles [][3]int) *MetaTile {
@@ -974,7 +978,7 @@ func (g *MetaGrid) MinimalMetaTile(tiles [][3]int) *MetaTile {
 
 	tile_pattern := g.tilesPattern(grid_size, buffers, nil, tiles)
 
-	return NewMetaTile(bbox, size, tile_pattern, grid_size)
+	return NewMetaTile(tile_pattern[0].Tiles, bbox, size, tile_pattern, grid_size)
 }
 
 func (g *MetaGrid) sizeFromBufferedBBox(bbox vec2d.Rect, level int) [2]uint32 {
@@ -1023,14 +1027,14 @@ func (g *MetaGrid) fullTileList(tiles [][3]int) ([][3]int, [2]uint32, [][3]int) 
 }
 
 func (g *MetaGrid) MainTile(tile_coord [3]int) [3]int {
-	x, y, z := tile_coord[0], tile_coord[1], tile_coord[2]
+	// x, y, z := tile_coord[0], tile_coord[1], tile_coord[2]
 
-	meta_size := g.metaSize(z)
+	// meta_size := g.metaSize(z)
 
-	x0 := int(math.Floor(float64(x)/float64(meta_size[0])) * float64(meta_size[0]))
-	y0 := int(math.Floor(float64(y)/float64(meta_size[1])) * float64(meta_size[1]))
+	// x0 := int(math.Floor(float64(x)/float64(meta_size[0])) * float64(meta_size[0]))
+	// y0 := int(math.Floor(float64(y)/float64(meta_size[1])) * float64(meta_size[1]))
 
-	return [3]int{x0, y0, z}
+	return tile_coord
 }
 
 func (g *MetaGrid) TileList(main_tile [3]int) [][3]int {
@@ -1041,6 +1045,15 @@ func (g *MetaGrid) TileList(main_tile [3]int) [][3]int {
 func (g *MetaGrid) metaTileList(main_tile [3]int, tile_grid [2]uint32) [][3]int {
 	t := g.MainTile(main_tile)
 	minx, miny, z := t[0], t[1], t[2]
+
+	gx := int(tile_grid[0]) - 1
+	gy := int(tile_grid[1]) - 1
+	gx = gx / 2
+	gy = gy / 2
+
+	minx -= gx
+	miny -= gy
+
 	maxx := minx + int(tile_grid[0]) - 1
 	maxy := miny + int(tile_grid[1]) - 1
 
@@ -1151,6 +1164,7 @@ type MetaTile struct {
 	size          [2]uint32
 	tile_patterns []TilePattern
 	grid_size     [2]uint32
+	main_tile     [3]int
 }
 
 func (t *MetaTile) GetBBox() vec2d.Rect {
@@ -1174,16 +1188,11 @@ func (t *MetaTile) GetTiles() [][3]int {
 }
 
 func (t *MetaTile) GetMainTileCoord() [3]int {
-	for _, t := range t.GetTiles() {
-		if t[0] >= 0 && t[1] >= 0 && t[2] >= 0 {
-			return t
-		}
-	}
-	return [3]int{-1, -1, -1}
+	return t.main_tile
 }
 
-func NewMetaTile(bbox vec2d.Rect, size [2]uint32, tiles []TilePattern, grid_size [2]uint32) *MetaTile {
-	return &MetaTile{bbox: bbox, size: size, tile_patterns: tiles, grid_size: grid_size}
+func NewMetaTile(main_tile [3]int, bbox vec2d.Rect, size [2]uint32, tiles []TilePattern, grid_size [2]uint32) *MetaTile {
+	return &MetaTile{main_tile: main_tile, bbox: bbox, size: size, tile_patterns: tiles, grid_size: grid_size}
 }
 
 func BBoxIntersects(one, two vec2d.Rect) bool {

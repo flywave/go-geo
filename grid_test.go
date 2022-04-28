@@ -324,9 +324,14 @@ func TestMetaTileMetaBox(t *testing.T) {
 
 func TestFullTileList(t *testing.T) {
 	conf := DefaultTileGridOptions()
-	mgrid := NewMetaGrid(NewTileGrid(conf), [2]uint32{2, 2}, 0)
+	mgrid := NewMetaGrid(NewTileGrid(conf), [2]uint32{3, 3}, 0)
 
 	tiles, grid_size, bounds := mgrid.fullTileList([][3]int{{0, 0, 2}, {1, 1, 2}})
+	tt := mgrid.GetMetaTile([3]int{6778, 3194, 13})
+
+	if tt == nil {
+		t.FailNow()
+	}
 
 	if len(tiles) != 4 {
 		t.FailNow()
