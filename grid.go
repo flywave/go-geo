@@ -423,9 +423,9 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 		cbbox, ok = DEFAULT_SRS_BBOX[srs.GetSrsCode()]
 		if !ok {
 			return nil
-		} else {
-			bbox = &cbbox
 		}
+	} else {
+		cbbox = *bbox
 	}
 
 	cbbox = GridBBox(cbbox, bbox_srs, srs)
