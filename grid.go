@@ -433,12 +433,12 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 	if res != nil {
 		sort.Sort(sort.Reverse(sort.Float64Slice(res)))
 	} else if align_with != nil {
-		res = alignedResolutions(min_res, max_res, res_factor, num_levels, bbox, tile_size, align_with, initial_res_min)
+		res = alignedResolutions(min_res, max_res, res_factor, num_levels, &cbbox, tile_size, align_with, initial_res_min)
 	} else {
-		res = caclResolutions(min_res, max_res, res_factor, num_levels, bbox, tile_size, initial_res_min)
+		res = caclResolutions(min_res, max_res, res_factor, num_levels, &cbbox, tile_size, initial_res_min)
 	}
 
-	return newTileGrid(name, is_geodetic, origin, srs, bbox, res_factor, tile_size, res, threshold_res, stretch_factor, max_shrink_factor)
+	return newTileGrid(name, is_geodetic, origin, srs, &cbbox, res_factor, tile_size, res, threshold_res, stretch_factor, max_shrink_factor)
 }
 
 func (t *TileGrid) calcGrids() [][2]uint32 {
