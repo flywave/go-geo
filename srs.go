@@ -120,6 +120,12 @@ func (p *SRSProj4) TransformTo(o Proj, points []vec2d.T) []vec2d.T {
 		ret := make([]vec2d.T, len(points))
 		for i, v := range points {
 			if p.IsLatLong() {
+				if v[1] > 85.05112877980659 {
+					v[1] = 85.05112877980659
+				}
+				if v[1] < -85.05112877980659 {
+					v[1] = -85.05112877980659
+				}
 				x, y, err := proj.Transform2(p.proj, prj.proj, v[0]*Deg2Rad, v[1]*Deg2Rad)
 				if err != nil {
 					continue
@@ -234,7 +240,7 @@ func (p *SRSProj4) TransformRectTo(o Proj, rect vec2d.Rect, withPoints int) vec2
 			maxx = 20037508.342789244
 		}
 		if bbox.Max[1] >= 85.06 {
-			maxy = 20037508.
+			maxy = 20037508.342789244
 		}
 		result = vec2d.Rect{Min: vec2d.T{minx, miny}, Max: vec2d.T{maxx, maxy}}
 	}
