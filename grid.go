@@ -312,6 +312,7 @@ func DefaultTileGridOptions() TileGridOptions {
 	conf[TILEGRID_MAX_SHRINK_FACTOR] = 4.0
 	conf[TILEGRID_ORIGIN] = ORIGIN_LL
 	conf[TILEGRID_INITIAL_RES_MIN] = false
+	conf[TILEGRID_NUM_LEVELS] = 25
 	return conf
 }
 
