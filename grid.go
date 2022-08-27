@@ -413,6 +413,8 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 		srs = newSRSProj4("EPSG:900913")
 	}
 
+	is_geodetic = srs.IsLatLong()
+
 	if tile_size == nil {
 		tile_size = []uint32{256, 256}
 	}
