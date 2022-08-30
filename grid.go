@@ -417,6 +417,7 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 	if bbox == nil {
 		var ok bool
 		cbbox, ok = DEFAULT_SRS_BBOX["EPSG:4326"]
+		bbox_srs = NewProj("EPSG:4326")
 		if !ok {
 			return nil
 		} else {
