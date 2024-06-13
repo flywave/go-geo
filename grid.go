@@ -435,7 +435,7 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 		res = caclResolutions(min_res, max_res, res_factor, num_levels, &cbbox, tile_size, initial_res_min)
 	}
 
-	return newTileGrid(name, is_geodetic, origin, srs, bbox, res_factor, tile_size, res, threshold_res, stretch_factor, max_shrink_factor)
+	return newTileGrid(name, is_geodetic, origin, srs, &cbbox, res_factor, tile_size, res, threshold_res, stretch_factor, max_shrink_factor)
 }
 
 func (t *TileGrid) calcGrids() [][2]uint32 {
