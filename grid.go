@@ -425,7 +425,7 @@ func NewTileGrid(options TileGridOptions) *TileGrid {
 		}
 	}
 
-	cbbox = GridBBox(cbbox, bbox_srs, srs)
+	cbbox = GridBBox(*bbox, bbox_srs, srs)
 
 	if res != nil {
 		sort.Sort(sort.Reverse(sort.Float64Slice(res)))
