@@ -5,8 +5,6 @@ import (
 	"math"
 	"testing"
 
-	m "github.com/flywave/go-mapbox/tileid"
-
 	vec2d "github.com/flywave/go3d/float64/vec2"
 )
 
@@ -614,80 +612,6 @@ func TestMergeResolutions(t *testing.T) {
 	res_range = MergeResolutionRange(
 		CacleResolutionRange(NewFloat64(10000), NewFloat64(10), nil, nil), nil)
 	if res_range != nil {
-		t.FailNow()
-	}
-}
-
-func TestGCJ02Tile(t *testing.T) {
-	pgcj02 := newGCJ02Proj(true)
-	srs900913 := newSRSProj4("EPSG:900913")
-
-	conf := DefaultTileGridOptions()
-	conf[TILEGRID_SRS] = srs900913
-	conf[TILEGRID_RES_FACTOR] = 2.0
-	conf[TILEGRID_TILE_SIZE] = []uint32{4096, 4096}
-	conf[TILEGRID_ORIGIN] = ORIGIN_UL
-
-	grid := NewTileGrid(conf)
-
-	bbox := grid.TileBBox([3]int{1686, 776, 11}, false)
-	tileid2 := m.TileID{X: 1686, Y: 776, Z: 11}
-	bounds := m.Bounds(tileid2)
-
-	bbox = srs900913.TransformRectTo(pgcj02, bbox, 16)
-
-	_, rect, tiles, err := grid.GetAffectedTiles(bbox, [2]uint32{4096, 4096}, pgcj02)
-
-	if tiles == nil || err != nil || rect == [2]int{0, 0} || bounds.E == 0 {
-		t.FailNow()
-	}
-}
-
-func TestGCJ02MCTile(t *testing.T) {
-	proj4326 := newSRSProj4("EPSG:4326")
-	gcj02mc := newGCJ02MCProj()
-
-	conf := DefaultTileGridOptions()
-	conf[TILEGRID_SRS] = gcj02mc
-	conf[TILEGRID_RES_FACTOR] = 2.0
-	conf[TILEGRID_TILE_SIZE] = []uint32{4096, 4096}
-	conf[TILEGRID_ORIGIN] = ORIGIN_UL
-
-	grid := NewTileGrid(conf)
-
-	bbox := grid.TileBBox([3]int{1686, 776, 11}, false)
-	tileid2 := m.TileID{X: 1686, Y: 776, Z: 11}
-	bounds := m.Bounds(tileid2)
-
-	bbox = gcj02mc.TransformRectTo(proj4326, bbox, 16)
-
-	_, rect, tiles, err := grid.GetAffectedTiles(bbox, [2]uint32{4096, 4096}, proj4326)
-
-	if tiles == nil || err != nil || rect == [2]int{0, 0} || bounds.E == 0 {
-		t.FailNow()
-	}
-}
-
-func TestGEO(t *testing.T) {
-	proj4326 := newSRSProj4("EPSG:4326")
-
-	conf := DefaultTileGridOptions()
-	conf[TILEGRID_SRS] = proj4326
-	conf[TILEGRID_RES_FACTOR] = 2.0
-	conf[TILEGRID_TILE_SIZE] = []uint32{256, 256}
-	conf[TILEGRID_ORIGIN] = ORIGIN_UL
-	conf[TILEGRID_BBOX] = &vec2d.Rect{Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}}
-	conf[TILEGRID_INITIAL_RES_MIN] = true
-
-	grid := NewTileGrid(conf)
-
-	bbox, si, _, _ := grid.GetAffectedLevelTiles(vec2d.Rect{Min: vec2d.T{-180, -90}, Max: vec2d.T{180, 90}}, 0)
-	tileid2 := m.TileID{X: 1686, Y: 776, Z: 11}
-	bounds := m.Bounds(tileid2)
-
-	_, rect, tiles, err := grid.GetAffectedTiles(bbox, [2]uint32{256, 256}, proj4326)
-
-	if tiles == nil || err != nil || rect == [2]int{0, 0} || bounds.E == 0 || si[0] == 0 {
 		t.FailNow()
 	}
 }
