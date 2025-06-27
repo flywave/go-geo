@@ -476,7 +476,7 @@ func NewProj(srsCode interface{}) Proj {
 			return newGCJ02Proj(true)
 		}
 		return newSRSProj4(c)
-	case int:
+	case int, uint, uint32, uint64, uint16, int32, int64, int16:
 		return newSRSProj4(fmt.Sprintf("EPSG:%d", c))
 	}
 	return nil
