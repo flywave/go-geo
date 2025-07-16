@@ -22,14 +22,14 @@ func applyCoords(coords [][]float64, src Proj, dst Proj) [][]float64 {
 
 func ApplyGeometry(g geom.Geometry, src Proj, dst Proj) geom.Geometry {
 	switch t := (g).(type) {
-	case geom.Point:
-		pt := t.Data()
-		dst := src.TransformTo(dst, []vec2d.T{{pt[0], pt[1]}})
-		return general.NewPoint(dst[0][:])
 	case geom.Point3:
 		pt := t.Data()
 		dst := src.TransformTo(dst, []vec2d.T{{pt[0], pt[1]}})
 		return general.NewPoint([]float64{dst[0][0], dst[0][1], pt[2]})
+	case geom.Point:
+		pt := t.Data()
+		dst := src.TransformTo(dst, []vec2d.T{{pt[0], pt[1]}})
+		return general.NewPoint(dst[0][:])
 	case geom.MultiPoint:
 		pts := t.Data()
 		pts = applyCoords(pts, src, dst)

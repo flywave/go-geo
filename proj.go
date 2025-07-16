@@ -466,13 +466,14 @@ func (p *BD09MCProj) IsAxisOrderNE() bool {
 func NewProj(srsCode interface{}) Proj {
 	switch c := srsCode.(type) {
 	case string:
-		if srsCode == "EPSG:BDMC" || srsCode == "EPSG:BD09MC" || srsCode == "BD09MC" {
+		switch srsCode {
+		case "EPSG:BDMC", "EPSG:BD09MC", "BD09MC":
 			return newBD09MCProj()
-		} else if srsCode == "EPSG:GCJ02MC" || srsCode == "GCJ02MC" {
+		case "EPSG:GCJ02MC", "GCJ02MC":
 			return newGCJ02MCProj()
-		} else if srsCode == "EPSG:BD09" || srsCode == "BD09" {
+		case "EPSG:BD09", "BD09":
 			return newBD09Proj(true)
-		} else if srsCode == "EPSG:GCJ02" || srsCode == "GCJ02" {
+		case "EPSG:GCJ02", "GCJ02":
 			return newGCJ02Proj(true)
 		}
 		return newSRSProj4(c)

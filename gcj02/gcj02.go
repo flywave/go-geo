@@ -5,7 +5,7 @@ import (
 )
 
 const earthR = 6378245.0
-const earchHalfCir = 20037508.34
+const earthHalfCir = 20037508.34
 
 func outOfChina(lat, lng float64) bool {
 	if lng < 72.004 || lng > 137.8347 {
@@ -81,7 +81,7 @@ func GCJ02toWGS84Exact(gcjLat, gcjLng float64) (wgsLat, wgsLng float64) {
 	mLat, mLng := gcjLat-dLat, gcjLng-dLng
 	pLat, pLng := gcjLat+dLat, gcjLng+dLng
 
-	for true {
+	for {
 		wgsLat, wgsLng = (mLat+pLat)/2, (mLng+pLng)/2
 		tmpLat, tmpLng := WGS84toGCJ02(wgsLat, wgsLng)
 		dLat, dLng = tmpLat-gcjLat, tmpLng-gcjLng
@@ -99,7 +99,6 @@ func GCJ02toWGS84Exact(gcjLat, gcjLng float64) (wgsLat, wgsLng float64) {
 			mLng = wgsLng
 		}
 	}
-	return
 }
 
 const (
@@ -163,11 +162,11 @@ func Distance(latA, lngA, latB, lngB float64) float64 {
 }
 
 func EPSG3857toWGS84(mercartorY, mercartorX float64) (wgsLat float64, wgsLng float64) {
-	if !(mercartorX >= -earchHalfCir && mercartorX <= earchHalfCir) {
+	if !(mercartorX >= -earthHalfCir && mercartorX <= earthHalfCir) {
 		return 0, 0
 	}
-	wgsLng = mercartorX / earchHalfCir * 180
-	wgsLat = mercartorY / earchHalfCir * 180
+	wgsLng = mercartorX / earthHalfCir * 180
+	wgsLat = mercartorY / earthHalfCir * 180
 	wgsLat = 180 / math.Pi * (2*math.Atan(math.Exp(wgsLat*math.Pi/180)) - math.Pi/2)
 	return
 }
@@ -176,9 +175,9 @@ func WGS84toEPSG3857(lat, lng float64) (mercartorY, mercartorX float64) {
 	if !(lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90) {
 		return 0, 0
 	}
-	mercartorX = lng * earchHalfCir / 180
+	mercartorX = lng * earthHalfCir / 180
 	mercartorY = math.Log(math.Tan((90+lat)*math.Pi/360)) / (math.Pi / 180)
-	mercartorY = mercartorY * earchHalfCir / 180
+	mercartorY = mercartorY * earthHalfCir / 180
 	return
 }
 
@@ -191,7 +190,7 @@ func GCJ02toGCJ02MC(lat, lng float64) (mercartorY, mercartorX float64) {
 }
 
 func GCJ02MCtoWGS84(mercartorY, mercartorX float64) (wgsLat float64, wgsLng float64) {
-	if !(mercartorX >= -earchHalfCir && mercartorX <= earchHalfCir) {
+	if !(mercartorX >= -earthHalfCir && mercartorX <= earthHalfCir) {
 		return 0, 0
 	}
 	wgsLat, wgsLng = GCJ02MCtoGCJ02(mercartorY, mercartorX)

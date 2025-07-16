@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"sync"
 
 	vec2d "github.com/flywave/go3d/float64/vec2"
 )
@@ -37,9 +38,13 @@ var (
 )
 
 func GetResolution(bbox vec2d.Rect, size [2]uint32) float64 {
-	w := math.Abs(bbox.Min[0] - bbox.Max[0])
-	h := math.Abs(bbox.Min[1] - bbox.Max[1])
-	return math.Min(w/float64(size[0]), h/float64(size[1]))
+	wSize := math.Max(float64(size[0]), 1)
+	hSize := math.Max(float64(size[1]), 1)
+
+	w := math.Max(math.Abs(bbox.Min[0]-bbox.Max[0]), math.SmallestNonzeroFloat64)
+	h := math.Max(math.Abs(bbox.Min[1]-bbox.Max[1]), math.SmallestNonzeroFloat64)
+
+	return math.Min(w/wSize, h/hSize)
 }
 
 func pyramidResLevel(initial_res float64, factor *float32, levels *uint32) []float64 {
@@ -68,26 +73,28 @@ const (
 )
 
 func OriginFromString(o string) OriginType {
-	if o == "ul" {
+	switch o {
+	case "ul":
 		return ORIGIN_UL
-	} else if o == "ll" {
+	case "ll":
 		return ORIGIN_LL
-	} else if o == "nw" {
+	case "nw":
 		return ORIGIN_NW
-	} else if o == "sw" {
+	case "sw":
 		return ORIGIN_SW
 	}
 	return ORIGIN_UL
 }
 
 func OriginToString(ot OriginType) string {
-	if ot == ORIGIN_UL {
+	switch ot {
+	case ORIGIN_UL:
 		return "ul"
-	} else if ot == ORIGIN_LL {
+	case ORIGIN_LL:
 		return "ll"
-	} else if ot == ORIGIN_NW {
+	case ORIGIN_NW:
 		return "nw"
-	} else if ot == ORIGIN_SW {
+	case ORIGIN_SW:
 		return "sw"
 	}
 	return ""
@@ -545,7 +552,7 @@ func NewGeodeticTileGrid() *TileGrid {
 }
 
 func (t *TileGrid) Resolution(level int) float64 {
-	if level >= int(t.Levels) {
+	if level < 0 || level >= int(t.Levels) {
 		return 0
 	}
 	return t.Resolutions[level]
@@ -620,15 +627,26 @@ func (t *TileGrid) SupportsAccessWithOrigin(origin OriginType) bool {
 		return true
 	}
 
-	delta := math.Max(math.Abs(t.BBox.Min[1]), math.Abs(t.BBox.Max[1])) / 1e12
+	yExtent := math.Max(math.Abs(t.BBox.Min[1]), math.Abs(t.BBox.Max[1]))
+	epsilon := math.Max(yExtent*1e-12, 1e-9)
 
 	for level := range t.GridSizes {
-		tiles := [][3]int{{0, 0, level},
-			{int(t.GridSizes[level][0]) - 1, int(t.GridSizes[level][1]) - 1, level}}
+		tiles := [][3]int{
+			{0, 0, level},
+			{int(t.GridSizes[level][0]) - 1, int(t.GridSizes[level][1]) - 1, level},
+		}
 		level_bbox := t.TilesBBox(tiles)
 
-		if math.Abs(t.BBox.Min[1]-level_bbox.Min[1]) > delta || math.Abs(t.BBox.Max[1]-level_bbox.Max[1]) > delta {
-			return false
+		if t.FlippedYAxis {
+			if math.Abs(t.BBox.Max[1]-level_bbox.Max[1]) > epsilon ||
+				math.Abs(t.BBox.Min[1]-level_bbox.Min[1]) > epsilon {
+				return false
+			}
+		} else {
+			if math.Abs(t.BBox.Min[1]-level_bbox.Min[1]) > epsilon ||
+				math.Abs(t.BBox.Max[1]-level_bbox.Max[1]) > epsilon {
+				return false
+			}
 		}
 	}
 	return true
@@ -696,6 +714,7 @@ func (t *TileGrid) GetAffectedLevelTiles(bbox vec2d.Rect, level int) (vec2d.Rect
 }
 
 type TileIter struct {
+	mu        sync.Mutex
 	grid_size [2]uint32
 	level     int
 	xs        []int
@@ -719,9 +738,13 @@ func (i *TileIter) GetTileBound() [4]uint32 {
 }
 
 func (i *TileIter) Next() (x, y, level int, done bool) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
 	x = i.xs[i.x_off]
 	y = i.ys[i.y_off]
 	level = i.level
+
 	if i.x_off < len(i.xs)-1 {
 		i.x_off++
 	} else {
@@ -732,11 +755,7 @@ func (i *TileIter) Next() (x, y, level int, done bool) {
 	if i.y_off >= len(i.ys) {
 		done = true
 		i.y_off = 0
-		return
-	} else {
-		done = false
 	}
-
 	return
 }
 
@@ -765,9 +784,17 @@ func (t *TileGrid) tileIter(x0, y0, x1, y1, level int) (vec2d.Rect, [2]int, *Til
 }
 
 func (t *TileGrid) TilesBBox(tiles [][3]int) vec2d.Rect {
-	ll_bbox := t.TileBBox(tiles[0], false)
-	ur_bbox := t.TileBBox(tiles[len(tiles)-1], false)
-	return MergeBBox(ll_bbox, ur_bbox)
+	if len(tiles) == 0 {
+		return vec2d.Rect{}
+	}
+
+	bbox := t.TileBBox(tiles[0], false)
+
+	for _, tile := range tiles[1:] {
+		tileBBox := t.TileBBox(tile, false)
+		bbox = MergeBBox(bbox, tileBBox)
+	}
+	return bbox
 }
 
 func (t *TileGrid) TileBBox(tile_coord [3]int, limit bool) vec2d.Rect {
@@ -813,6 +840,9 @@ func (t *TileGrid) ToString() string {
 }
 
 func (t *TileGrid) isSubsetOf(other *TileGrid) bool {
+	if other == nil {
+		return false
+	}
 	if !t.Srs.Eq(other.Srs) {
 		return false
 	}
@@ -831,12 +861,12 @@ func (t *TileGrid) isSubsetOf(other *TileGrid) bool {
 			{int(t.GridSizes[self_level][0]) - 1, int(t.GridSizes[self_level][1]) - 1, self_level},
 		})
 
-		bbox, level, err := other.GetAffectedBBoxAndLevel(level_bbox, level_size, nil)
+		converted_bbox, level, err := other.GetAffectedBBoxAndLevel(level_bbox, level_size, nil)
 		if err != nil {
 			return false
 		}
 
-		bbox, _, _, err = other.GetAffectedLevelTiles(level_bbox, level)
+		final_bbox, _, _, err := other.GetAffectedLevelTiles(converted_bbox, level)
 		if err != nil {
 			return false
 		}
@@ -844,7 +874,7 @@ func (t *TileGrid) isSubsetOf(other *TileGrid) bool {
 		if other.Resolution(level) != t.Resolutions[self_level] {
 			return false
 		}
-		if !BBoxEquals(bbox, level_bbox, math.Inf(1), math.Inf(1)) {
+		if !BBoxEquals(final_bbox, level_bbox, math.Inf(1), math.Inf(1)) {
 			return false
 		}
 	}
@@ -921,22 +951,22 @@ func (g *MetaGrid) bufferedBBox(bbox vec2d.Rect, level int, limit_to_grid_bbox b
 		if limit_to_grid_bbox {
 			if g.BBox.Min[0] > minx {
 				delta := g.BBox.Min[0] - minx
-				buffers[0] = buffers[0] - int(round(delta/res, 5))
+				buffers[0] = int(math.Max(float64(buffers[0]-int(round(delta/res, 5))), 0))
 				minx = g.BBox.Min[0]
 			}
 			if g.BBox.Min[1] > miny {
 				delta := g.BBox.Min[1] - miny
-				buffers[1] = buffers[1] - int(round(delta/res, 5))
+				buffers[1] = int(math.Max(float64(buffers[1]-int(round(delta/res, 5))), 0))
 				miny = g.BBox.Min[1]
 			}
 			if g.BBox.Max[0] < maxx {
 				delta := maxx - g.BBox.Max[0]
-				buffers[2] = buffers[2] - int(round(delta/res, 5))
+				buffers[2] = int(math.Max(float64(buffers[2]-int(round(delta/res, 5))), 0))
 				maxx = g.BBox.Max[0]
 			}
 			if g.BBox.Max[1] < maxy {
 				delta := maxy - g.BBox.Max[1]
-				buffers[3] = buffers[3] - int(round(delta/res, 5))
+				buffers[3] = int(math.Max(float64(buffers[3]-int(round(delta/res, 5))), 0))
 				maxy = g.BBox.Max[1]
 			}
 		}
@@ -1311,20 +1341,25 @@ func (r *ResolutionRange) ToString() string {
 }
 
 func CacleResolutionRange(min_res *float64, max_res *float64, max_scale *float64, min_scale *float64) *ResolutionRange {
-	if min_scale == nil && max_scale == nil && min_res == nil && max_res == nil {
+	// 所有参数均为空时返回 nil
+	if min_res == nil && max_res == nil && max_scale == nil && min_scale == nil {
 		return nil
 	}
+
+	// 优先处理分辨率参数
 	if min_res != nil || max_res != nil {
-		if max_scale == nil && min_scale == nil {
-			return NewResolutionRange(min_res, max_res)
-		}
-	} else if max_scale != nil && min_scale != nil {
-		if min_res == nil && max_res == nil {
-			cmin_res := ogc_scale_to_res(*max_scale)
-			cmax_res := ogc_scale_to_res(*min_scale)
-			return NewResolutionRange(&cmin_res, &cmax_res)
-		}
+		// 当存在分辨率参数时，忽略比例尺参数
+		return NewResolutionRange(min_res, max_res)
 	}
+
+	// 处理比例尺参数（需要同时存在最大和最小比例尺）
+	if max_scale != nil && min_scale != nil {
+		cmin_res := ogc_scale_to_res(*max_scale)
+		cmax_res := ogc_scale_to_res(*min_scale)
+		return NewResolutionRange(&cmin_res, &cmax_res)
+	}
+
+	// 无效的参数组合返回 nil
 	return nil
 }
 
