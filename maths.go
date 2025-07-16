@@ -227,3 +227,14 @@ func ScaleInt(a int, scale float64) int {
 
 	return RoundToInt(float64(a) * scale)
 }
+
+// 辅助函数：限制数值在[min, max]范围内
+func clamp(value, min, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}

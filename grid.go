@@ -695,6 +695,22 @@ func (t *TileGrid) GetAffectedBBoxAndLevel(bbox vec2d.Rect, size [2]uint32, req_
 	return src_bbox, level, nil
 }
 
+func (t *TileGrid) GetAffectedTilesRange(bbox vec2d.Rect, zoom int) (minX, maxX, minY, maxY int) {
+	minTileX, minTileY, _ := t.Tile(bbox.Min[0], bbox.Min[1], zoom)
+	maxTileX, maxTileY, _ := t.Tile(bbox.Max[0], bbox.Max[1], zoom)
+
+	if t.FlippedYAxis {
+		minTileY, maxTileY = maxTileY, minTileY
+	}
+
+	gridSize := t.GridSizes[zoom]
+	minX = clamp(minTileX, 0, int(gridSize[0])-1)
+	maxX = clamp(maxTileX, 0, int(gridSize[0])-1)
+	minY = clamp(minTileY, 0, int(gridSize[1])-1)
+	maxY = clamp(maxTileY, 0, int(gridSize[1])-1)
+	return
+}
+
 func (t *TileGrid) GetAffectedLevelTiles(bbox vec2d.Rect, level int) (vec2d.Rect, [2]int, *TileIter, error) {
 	delta := t.Resolutions[level] / 10.0
 	minx := bbox.Min[0] + delta
