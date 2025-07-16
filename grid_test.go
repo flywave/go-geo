@@ -1,7 +1,6 @@
 package geo
 
 import (
-	"fmt"
 	"math"
 	"testing"
 
@@ -142,7 +141,7 @@ func TestTileGridClosestLevel(t *testing.T) {
 		result = append(result, grid.ClosestLevel(x))
 	}
 	for _, v := range result {
-		t.Log(fmt.Sprintf("%d/n", v))
+		t.Logf("%d/n", v)
 	}
 }
 
@@ -204,15 +203,15 @@ func TestEpsg4326BBox(t *testing.T) {
 		t.FailNow()
 	}
 
-	t.Log(fmt.Sprintf("%v--%v--%v--%v/n", abbox.Min[0], abbox.Min[1], abbox.Max[0], abbox.Max[1]))
-	t.Log(fmt.Sprintf("%d--%d/n", grid_size[0], grid_size[1]))
+	t.Logf("%v--%v--%v--%v/n", abbox.Min[0], abbox.Min[1], abbox.Max[0], abbox.Max[1])
+	t.Logf("%d--%d/n", grid_size[0], grid_size[1])
 
 	testv := make([][3]int, 0)
 	for {
 		x, y, z, done := tiles.Next()
 
 		testv = append(testv, [3]int{x, y, z})
-		t.Log(fmt.Sprintf("%d--%d--%d/n", x, y, z))
+		t.Logf("%d--%d--%d/n", x, y, z)
 
 		if done {
 			break
@@ -283,12 +282,12 @@ func TestMetaTileList(t *testing.T) {
 	coord := [3]int{0, 0, 2}
 	grids, _ := mgrid.metaBBox(&coord, nil, true)
 
-	t.Log(fmt.Sprintf("%v--%v--%v--%v/n", grids.Min[0], grids.Min[1], grids.Max[0], grids.Max[1]))
+	t.Logf("%v--%v--%v--%v/n", grids.Min[0], grids.Min[1], grids.Max[0], grids.Max[1])
 
 	coord = [3]int{0, 0, 0}
 	grids, _ = mgrid.metaBBox(&coord, nil, true)
 
-	t.Log(fmt.Sprintf("%v--%v--%v--%v/n", grids.Min[0], grids.Min[1], grids.Max[0], grids.Max[1]))
+	t.Logf("%v--%v--%v--%v/n", grids.Min[0], grids.Min[1], grids.Max[0], grids.Max[1])
 }
 
 func TestTilesPattern(t *testing.T) {
@@ -450,10 +449,10 @@ func TestDifferentSRS(t *testing.T) {
 	g2 := NewTileGrid(conf2)
 	g3 := NewTileGrid(conf3)
 
-	if g1.isSubsetOf(g2) {
+	if g1.IsSubsetOf(g2) {
 		t.FailNow()
 	}
-	if !g3.isSubsetOf(g2) {
+	if !g3.IsSubsetOf(g2) {
 		t.FailNow()
 	}
 
@@ -472,11 +471,11 @@ func TestLessLevels(t *testing.T) {
 	g1 := NewTileGrid(conf1)
 	g2 := NewTileGrid(conf2)
 
-	if !g1.isSubsetOf(g2) {
+	if !g1.IsSubsetOf(g2) {
 		t.FailNow()
 	}
 
-	if g2.isSubsetOf(g1) {
+	if g2.IsSubsetOf(g1) {
 		t.FailNow()
 	}
 }
@@ -498,7 +497,7 @@ func TestResSubset(t *testing.T) {
 	if BBoxEquals(g1.TileBBox([3]int{0, 0, 0}, false), g2.TileBBox([3]int{0, 0, 0}, false), math.Inf(1), math.Inf(1)) {
 		t.FailNow()
 	}
-	if !g1.isSubsetOf(g2) {
+	if !g1.IsSubsetOf(g2) {
 		t.FailNow()
 	}
 }
@@ -519,7 +518,7 @@ func TestSubbbox(t *testing.T) {
 
 	g2 := NewTileGrid(conf2)
 
-	if !g2.isSubsetOf(g1) {
+	if !g2.IsSubsetOf(g1) {
 		t.FailNow()
 	}
 }
@@ -539,7 +538,7 @@ func TestIncompatibleSubbbox(t *testing.T) {
 
 	g2 := NewTileGrid(conf2)
 
-	if g2.isSubsetOf(g1) {
+	if g2.IsSubsetOf(g1) {
 		t.FailNow()
 	}
 }
@@ -557,7 +556,7 @@ func TestTileSize(t *testing.T) {
 	g1 := NewTileGrid(conf1)
 	g2 := NewTileGrid(conf2)
 
-	if g1.isSubsetOf(g2) {
+	if g1.IsSubsetOf(g2) {
 		t.FailNow()
 	}
 }
@@ -576,7 +575,7 @@ func TestNOTileErrors(t *testing.T) {
 	g1 := NewTileGrid(conf1)
 	g2 := NewTileGrid(conf2)
 
-	if g1.isSubsetOf(g2) {
+	if g1.IsSubsetOf(g2) {
 		t.FailNow()
 	}
 }

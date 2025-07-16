@@ -855,7 +855,7 @@ func (t *TileGrid) ToString() string {
 	return fmt.Sprintf("%s(%s, (%.4f, %.4f, %.4f, %.4f)", t.Name, t.Srs.ToString(), t.BBox.Min[0], t.BBox.Min[1], t.BBox.Max[0], t.BBox.Max[1])
 }
 
-func (t *TileGrid) isSubsetOf(other *TileGrid) bool {
+func (t *TileGrid) IsSubsetOf(other *TileGrid) bool {
 	if other == nil {
 		return false
 	}
