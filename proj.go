@@ -3,11 +3,18 @@ package geo
 import (
 	"fmt"
 	"math"
+	"path/filepath"
 
+	"github.com/flywave/go-proj"
 	vec2d "github.com/flywave/go3d/float64/vec2"
 
 	"github.com/flywave/go-geo/gcj02"
 )
+
+func init() {
+	dir := getCurrentDir()
+	proj.SetFinder([]string{filepath.Join(dir, "./proj_data")})
+}
 
 type Proj interface {
 	TransformTo(o Proj, points []vec2d.T) []vec2d.T
