@@ -1,15 +1,8 @@
 package geo
 
 import (
-	"path/filepath"
-
 	"github.com/flywave/go-geoid"
 )
-
-func init() {
-	dir := getCurrentDir()
-	geoid.SetGeoidPath(filepath.Join(dir, "./geoid_data"))
-}
 
 func geoid84_30() *geoid.Geoid {
 	return geoid.NewGeoid(geoid.EGM84, false)
