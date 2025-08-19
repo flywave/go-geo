@@ -653,9 +653,6 @@ func (t *TileGrid) SupportsAccessWithOrigin(origin OriginType) bool {
 }
 
 func (t *TileGrid) OriginTile(level int, origin OriginType) [3]int {
-	if t.SupportsAccessWithOrigin(origin) {
-		panic("tile origins are incompatible")
-	}
 	cx, cy, clevel := 0, 0, level
 
 	if t.Origin == origin {
